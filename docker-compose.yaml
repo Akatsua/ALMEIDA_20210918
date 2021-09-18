@@ -28,6 +28,9 @@ services:
 
   # Postgres & Azurite need a persistent drive to be production ready
   # as everytime the containers are rebooted, all data is wiped
+  # Passwords should also be removed here and placed in a Key Vault
+  # or other secure system. On deploy, the KVault should be queried and
+  # the password in these files replaced
   postgres-archive:
     image: postgres
     restart: always
