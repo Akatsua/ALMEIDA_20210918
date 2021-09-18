@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Videos</title>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+</head>
+<body>
+	
+	<h1>Upload</h1>
+	
+	<button onclick="location.href='upload.html'">Move to page</button>
+
+	<p></p>
+
+	<form enctype="multipart/form-data" method="POST" id="uploadForm" action="javascript:void(0);" onsubmit="uploadFile()">
+		<table>
+			<tr>
+				<td>Title</td>
+				<td><input type="text" name="Title" id="Title"></td>
+			</tr>
+			<tr>
+				<td>Category</td>
+				<td>
+					<select id="Category">
+						<option selected>None</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>File</td>
+				<td><input type="file" name="File" id="File"></td>
+			</tr>
+			<tr>
+				<td><input type="submit" name="submit" id="submit" value="Upload File"></td>
+			</tr>
+		</table>
+	</form>
+	
+	<h1>Video listing </h1>
+	
+	<button onclick="refreshVids()">Refresh</button>
+	
+	<p></p>
+
+	<div id="vids">
+	</div>
+
+	<script>
+		
+		fetch("http://localhost:5000/api/video/category", requestOptions)
+			.then(response => response.json())
+			.then(data => initializeCategories(data))
+			.catch(error => console.log('error', error));
+		
+		refreshVids();
+		
+		function uploadFile() {
+			var file = document.querySelector('input[type="file"]');
+			var title = document.querySelector('input[id="Title"]').value;
+			var category = document.querySelector('select[id="Category"]').value;
+
+			var data = new FormData()
+			data.append('File', file.files[0])
+			data.append('Title', title)
+			data.append('Category', category)
+
+			fetch('http://localhost:5000/api/video/upload', {
+			  method: 'POST',
+			  body: data
+			})
+			.then(response => {
+				if (response.status == 200) {
+					alert("Success");
+				}
+				else {
+					alert("Couldn't submit file");
+				}
+			})
+			.catch(error => console.log('error', error));
+		}
+		
+		function initializeCategories(categories) {
+			$("#Category").empty();
+			
+			var category = document.querySelector('select[id="Category"]'); 
+			categories.forEach(val => category.add(new Option(val, val)));
+		}
+		
+		var requestOptions = {
+			method: 'GET',
+			redirect: 'follow'
+		};
+
+		function refreshVids() {
+			fetch("http://localhost:5000/api/video/list", requestOptions)
+				.then(response => response.json())
+				.then(data => showVids(data))
+				.catch(error => console.log('error', error));
+		}
+			
+		function showVids(vids) {
+		
+			var html = `
+			<div>
+				<table>
+					<tr>
+						<td><a href="{{URL}}"><img src="{{B64}}" title="{{Title}}"/></a></td>
+						<td>
+							<p><h2><b>{{Title}}</b></h2></p>
+							<p>{{Category}}</p>
+						</td>
+					</tr>
+				</table>
+			</div>`;
+		
+			var output = "";
+		
+			vids.videos.forEach(v => {
+				var tmpHtml = html;
+				tmpHtml = tmpHtml.replace("{{Title}}", v.videoTitle).replace("{{Title}}", v.videoTitle);
+				tmpHtml = tmpHtml.replace("{{Category}}", v.videoCategory);
+				tmpHtml = tmpHtml.replace("{{URL}}", v.videoFilename);
+				tmpHtml = tmpHtml.replace("{{B64}}", "data:image/png;base64," + v.videoThumbnailLarge);
+				
+				output = output + tmpHtml;
+			}); 
+		
+			document.getElementById('vids').innerHTML = output;
+
+		}
+		
+	</script>
+</body>
+</html>

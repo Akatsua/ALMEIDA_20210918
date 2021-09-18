@@ -1,0 +1,86 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Videos</title>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+</head>
+<body>
+	
+	<h1>Upload</h1>
+	
+	<button onclick="location.href='index.html'">Go back</button>
+
+	<p></p>
+
+	<form enctype="multipart/form-data" method="POST" id="uploadForm" action="javascript:void(0);" onsubmit="uploadFile()">
+		<table>
+			<tr>
+				<td>Title</td>
+				<td><input type="text" name="Title" id="Title"></td>
+			</tr>
+			<tr>
+				<td>Category</td>
+				<td>
+					<select id="Category">
+						<option selected>None</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>File</td>
+				<td><input type="file" name="File" id="File"></td>
+			</tr>
+			<tr>
+				<td><input type="submit" name="submit" id="submit" value="Upload File"></td>
+			</tr>
+		</table>
+	</form>
+		
+	<script>
+		
+		var requestOptions = {
+			method: 'GET',
+			redirect: 'follow'
+		};
+
+		fetch("http://localhost:5000/api/video/category", requestOptions)
+			.then(response => response.json())
+			.then(data => initializeCategories(data))
+			.catch(error => console.log('error', error));
+		
+		function uploadFile() {
+			var file = document.querySelector('input[type="file"]');
+			var title = document.querySelector('input[id="Title"]').value;
+			var category = document.querySelector('select[id="Category"]').value;
+
+			var data = new FormData()
+			data.append('File', file.files[0])
+			data.append('Title', title)
+			data.append('Category', category)
+
+			fetch('http://localhost:5000/api/video/upload', {
+			  method: 'POST',
+			  body: data
+			})
+			.then(response => {
+				if (response.status == 200) {
+					alert("Success");
+				}
+				else {
+					alert("Couldn't submit file");
+				}
+			})
+			.catch(error => console.log('error', error));
+		}
+		
+		function initializeCategories(categories) {
+			$("#Category").empty();
+			
+			var category = document.querySelector('select[id="Category"]'); 
+			categories.forEach(val => category.add(new Option(val, val)));
+		}
+
+	</script>
+</body>
+</html>

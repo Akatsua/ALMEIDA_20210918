@@ -1,0 +1,71 @@
+version: '3.4'
+services:
+  gateway-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.Gateway
+    depends_on:
+      archive-api:
+        condition: service_started
+      postgres-gateway:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+    ports: 
+      - 5000:80
+      - 5001:443
+
+  archive-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.Archive
+    depends_on:
+      postgres-archive:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+
+
+  # Postgres & Azurite need a persistent drive to be production ready
+  # as everytime the containers are rebooted, all data is wiped
+  postgres-archive:
+    image: postgres
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: abc123
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-gateway:
+    image: postgres
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: abc123
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite 
+    restart: always
+    ports:
+      - 10000:10000
+      
+  webpage:
+    build:
+      context: .
+      dockerfile: Dockerfile.Webpage
+    depends_on:
+      gateway-api:
+        condition: service_started
+    ports: 
+      - 8080:80
